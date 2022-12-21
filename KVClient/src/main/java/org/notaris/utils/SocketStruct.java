@@ -17,4 +17,13 @@ public class SocketStruct {
         this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.out = new PrintWriter(socket.getOutputStream(), true);
     }
+
+    @Override
+    public String toString() {
+        return "SocketStruct{" +
+                "socket=" + socket +
+                ", in=" + in +
+                ", out=" + out +
+                '}';
+    }
 }

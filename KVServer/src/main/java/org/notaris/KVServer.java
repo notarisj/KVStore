@@ -22,12 +22,9 @@ public class KVServer {
 
     public static Trie mainDB = new Trie(new TrieNode(new HashMap<>()));
 
-    public static void main(String[] args1) throws IOException {
+    public static void main(String[] args) throws IOException {
         String ipAddress = "";
         int port = 0;
-
-        String[] args = {"-a", "192.168.31.4", "-p", "9997"};
-
 
         // parse command-line arguments
         for (int i = 0; i < args.length; i++) {
