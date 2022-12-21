@@ -73,7 +73,7 @@ public class DataCreator {
         }
         logger.info("All keys generated successfully!");
         logger.info("Trying to write output file...");
-        IO.writeFile("C:\\Users\\Notaris\\Desktop\\outputFile.txt", outputFile);
+        IO.writeFile("/Users/notaris/Desktop//outputFile.txt", outputFile);
         logger.info("Output file generated successfully!");
     }
 }

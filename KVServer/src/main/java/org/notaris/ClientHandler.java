@@ -45,50 +45,13 @@ class ClientHandler implements Runnable {
                     inputLine = inputLine.trim();
 
                     logger.info("Command \"" + inputLine + "\" received from user " + user);
-                    String command = inputLine.contains(" ") ? inputLine.substring(0, inputLine.indexOf(' ')).trim() : inputLine.trim();
-                    String rightPart = inputLine.contains(" ") ? inputLine.substring(inputLine.indexOf(' ') + 1).trim() : "";
-                    String response = "";
 
                     long startTime = System.currentTimeMillis();
-                    if (StringUtils.equals(command, "PUT")) {
-                        ServerUtils.saveKey(rightPart, mainDB);
-                        logger.info("KEY INSERTED");
-                        response = "KEY INSERTED";
-                    } else if (StringUtils.equals(command, "GET")) {
-                        Object key = ServerUtils.findKey(rightPart, mainDB);
-
-
-                        StringBuilder builder = new StringBuilder();
-                        //TrieUtils.print(mainDB.getRoot(), builder, true);
-                        HashMap<String, TrieNode> finalChildren = new HashMap<>();
-                        TrieUtils.findChildren(mainDB.getRoot(), builder, finalChildren, true);
-
-
-                        if (key != null && key instanceof Trie) {
-                            response = rightPart + " -> " + TrieUtils.getKey((Trie) key);
-                        } else if (key != null && key instanceof String){
-                            response = rightPart + " -> " + key;
-                        } else {
-                            response = "KEY WAS NOT FOUND";
-                        }
-
-                    } else if (StringUtils.equals(command, "INDEX")) {
-                        Set<String> indexFile = IO.readFile(rightPart);
-                        for (String key : indexFile) {
-                            ServerUtils.saveKey(key, mainDB);
-                            logger.info("IMPORTED KEY" + key);
-                        }
-                        logger.info("FILE INDEXED");
-                        response = "FILE INDEXED";
-                    } else {
-                        response = "ERROR: " + command;
-                    }
-
+                    String response = handleCommand(inputLine);
                     long endTime = System.currentTimeMillis();
 
-                    out.println(response + "\n" + "Time to execute: " + df.format(endTime - startTime) + "\n");
+                    out.write(response + "\n" + "Time to execute: " + df.format(endTime - startTime) + "\n");
                     out.flush();
-                    //if (in.ready()) in.skip(inputLine.length());
                 } else {
                     logger.info("Connection with " + user + " was disconnected");
                     in.close();
@@ -102,4 +65,51 @@ class ClientHandler implements Runnable {
             logger.info("Connection with " + user + " was disconnected unexpectedly");
         }
     }
+
+
+    private String handleCommand(String userCommand) {
+
+        String[] command = UserCommandUtils.readCommand(userCommand);
+        String commandType = command[0];
+        String rightPart = command[1];
+        String response;
+
+        if (StringUtils.equals(commandType, "PUT")) {
+            ServerUtils.saveKey(rightPart, mainDB);
+            logger.info("KEY INSERTED");
+            response = "KEY INSERTED" + rightPart;
+        } else if (StringUtils.equals(commandType, "GET")) {
+            Object key = ServerUtils.findKey(rightPart, mainDB);
+
+            StringBuilder builder = new StringBuilder();
+            //TrieUtils.print(mainDB.getRoot(), builder, true);
+            HashMap<String, TrieNode> finalChildren = new HashMap<>();
+            TrieUtils.findChildren(mainDB.getRoot(), builder, finalChildren, true);
+
+
+            if (key != null && key instanceof Trie) {
+                response = rightPart + " -> " + TrieUtils.getKey((Trie) key);
+            } else if (key != null && key instanceof String){
+                response = rightPart + " -> " + key;
+            } else {
+                response = "KEY WAS NOT FOUND";
+            }
+
+        } else if (StringUtils.equals(commandType, "INDEX")) {
+            Set<String> indexFile = IO.readFile(rightPart);
+            for (String key : indexFile) {
+                ServerUtils.saveKey(key, mainDB);
+                logger.info("IMPORTED KEY" + key);
+            }
+            logger.info("FILE INDEXED");
+            response = "FILE INDEXED";
+        } else {
+            response = "ERROR: " + commandType;
+        }
+
+        return response;
+    }
+
+
+
 }
