@@ -8,7 +8,7 @@ import java.net.Socket;
 
 public class SocketStruct {
 
-    Socket socket;
+    public Socket socket;
     public BufferedReader in;
     public PrintWriter out;
 
