@@ -1,6 +1,7 @@
 package org.notaris;
 
-import org.apache.commons.lang3.StringUtils;
+import net.objecthunter.exp4j.Expression;
+import net.objecthunter.exp4j.ExpressionBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.notaris.tree.trie.Trie;
@@ -16,6 +17,7 @@ import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 class ClientHandler implements Runnable {
@@ -50,7 +52,7 @@ class ClientHandler implements Runnable {
                     String response = handleCommand(inputLine);
                     long endTime = System.currentTimeMillis();
 
-                    out.write(response + "\n" + "Time to execute: " + df.format(endTime - startTime) + "\n");
+                    out.println(response + "\n" + "Time to execute: " + df.format(endTime - startTime) + "\nEND");
                     out.flush();
                 } else {
                     logger.info("Connection with " + user + " was disconnected");
@@ -74,42 +76,104 @@ class ClientHandler implements Runnable {
         String rightPart = command[1];
         String response;
 
-        if (StringUtils.equals(commandType, "PUT")) {
-            ServerUtils.saveKey(rightPart, mainDB);
-            logger.info("KEY INSERTED");
-            response = "KEY INSERTED" + rightPart;
-        } else if (StringUtils.equals(commandType, "GET")) {
-            Object key = ServerUtils.findKey(rightPart, mainDB);
-
-            StringBuilder builder = new StringBuilder();
-            //TrieUtils.print(mainDB.getRoot(), builder, true);
-            HashMap<String, TrieNode> finalChildren = new HashMap<>();
-            TrieUtils.findChildren(mainDB.getRoot(), builder, finalChildren, true);
-
-
-            if (key != null && key instanceof Trie) {
-                response = rightPart + " -> " + TrieUtils.getKey((Trie) key);
-            } else if (key != null && key instanceof String){
-                response = rightPart + " -> " + key;
-            } else {
-                response = "KEY WAS NOT FOUND";
+        switch (commandType) {
+            case "PUT" -> {
+                response = handlePut(rightPart);
             }
-
-        } else if (StringUtils.equals(commandType, "INDEX")) {
-            Set<String> indexFile = IO.readFile(rightPart);
-            for (String key : indexFile) {
-                ServerUtils.saveKey(key, mainDB);
-                logger.info("IMPORTED KEY" + key);
+            case "GET" -> { // Searches only in top level keys
+                response = handleGet(rightPart);
             }
-            logger.info("FILE INDEXED");
-            response = "FILE INDEXED";
-        } else {
-            response = "ERROR: " + commandType;
+            case "QUERY" -> {
+                response = handleQuery(rightPart);
+            }
+            case "INDEX" -> {
+                response = handleIndex(rightPart);
+            }
+            case "DELETE" -> {
+                response = handleDelete(rightPart);
+            }
+            case "COMPUTE" -> {
+                response = handleCompute(rightPart);
+            }
+            default -> response = "ERROR: " + commandType;
         }
-
         return response;
     }
 
+    private String handlePut(String rightPart) {
+        ServerUtils.saveKey(rightPart, mainDB);
+        logger.info("KEY INSERTED");
+        return "KEY INSERTED " + rightPart;
+    }
+
+    private String handleGet(String rightPart) {
+        TrieNode keyValue = mainDB.find(rightPart);
+        if (keyValue != null) {
+            Trie keyToFind = (Trie) keyValue.getValue();
+            return rightPart + " -> " + TrieUtils.getKey(keyToFind);
+        } else {
+            return "KEY WAS NOT FOUND";
+        }
+    }
+
+    private String handleQuery(String rightPart) {
+        Object key = ServerUtils.findKey(rightPart, mainDB);
+        if (key != null && key instanceof Trie) {
+            return rightPart + " -> " + TrieUtils.getKey((Trie) key);
+        } else if (key != null && key instanceof String) {
+            return rightPart + " -> " + key;
+        } else {
+            return "KEY WAS NOT FOUND";
+        }
+    }
+
+    private String handleIndex(String rightPart) {
+        Set<String> indexFile = IO.readFile(rightPart);
+        for (String _key : indexFile) {
+            ServerUtils.saveKey(_key, mainDB);
+            logger.info("IMPORTED KEY" + _key);
+        }
+        logger.info("FILE INDEXED");
+        return "FILE INDEXED";
+    }
+
+    private String handleDelete(String rightPart) {
+        boolean keyDeleted = ServerUtils.delete(rightPart, mainDB);
+        if (keyDeleted) {
+            return "KEY DELETED SUCCESSFULLY";
+        } else {
+            return "THERE WAS AN ERROR DELETING KEY: " + rightPart;
+        }
+    }
+
+    private String handleCompute(String rightPart) {
+
+        String strExpression = rightPart.substring(0, rightPart.indexOf("WHERE ") - 1);
+
+        String[] queryParameters = rightPart.substring(rightPart.indexOf("WHERE ") + 6, rightPart.length()).split("AND");
+
+        HashMap<String, Double> parameters = new HashMap<>();
+
+        for (String parameter : queryParameters) {
+            String[] queryArray = parameter.split("=");
+            String variable = queryArray[0].trim();
+            String query = queryArray[1].replace("QUERY ", "").trim();
+
+            String resolvedValue = handleQuery(query);
+            String parsedResolvedValue = resolvedValue.substring(resolvedValue.indexOf(" -> ") + 4, resolvedValue.length());
+            parameters.put(variable, Double.valueOf(parsedResolvedValue));
+        }
+
+        Expression expression = new ExpressionBuilder(strExpression)
+                .variables(parameters.keySet())
+                .build();
+
+        for (Map.Entry<String, Double> entry : parameters.entrySet()) {
+            expression.setVariable(entry.getKey(), entry.getValue());
+        }
+
+        return String.valueOf(expression.evaluate());
+    }
 
 
 }

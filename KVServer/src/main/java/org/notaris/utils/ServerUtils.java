@@ -45,7 +45,7 @@ public class ServerUtils {
     }
 
     public static Object findKey(String key, Trie mainDB) {
-        String[] keyParts = key.replace(".", "-").split("-");
+        String[] keyParts = key.split("\\.");
         Trie currDB = mainDB;
 
         for (int i = 0; i < keyParts.length; i++) {
@@ -60,10 +60,39 @@ public class ServerUtils {
                     currDB = (Trie) currNode.getValue();
                 }
             }
-
         }
-
         return null;
+    }
+
+    public static Boolean delete(String key, Trie mainDB) {
+        if (findKey(key, mainDB) != null) {
+            delete(mainDB.getRoot(), key, 0);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private static boolean delete(TrieNode current, String key, int index) {
+        if (index == key.length()) {
+            if (!current.getEndOfWord()) {
+                return false;
+            }
+            current.setEndOfWord(false);
+            return current.getChildren() == null;
+        }
+        char ch = key.charAt(index);
+        TrieNode node = current.getChildren().get(ch);
+        if (node == null) {
+            return false;
+        }
+        boolean shouldDeleteCurrentNode = delete(node, key, index + 1) && !node.getEndOfWord();
+
+        if (shouldDeleteCurrentNode) {
+            current.getChildren().remove(ch);
+            return current.getChildren() == null;
+        }
+        return false;
     }
 
     public static String getCommandFirstPart(String cmd) {
