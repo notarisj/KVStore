@@ -1,13 +1,8 @@
 package org.notaris;
 
-import net.objecthunter.exp4j.Expression;
-import net.objecthunter.exp4j.ExpressionBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.notaris.tree.trie.Trie;
-import org.notaris.tree.trie.TrieNode;
-import org.notaris.tree.trie.TrieUtils;
-import org.notaris.utils.ServerUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,9 +11,6 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 class ClientHandler implements Runnable {
     private Socket clientSocket;
@@ -68,7 +60,6 @@ class ClientHandler implements Runnable {
         }
     }
 
-
     private String handleCommand(String userCommand) {
 
         String[] command = UserCommandUtils.readCommand(userCommand);
@@ -78,102 +69,25 @@ class ClientHandler implements Runnable {
 
         switch (commandType) {
             case "PUT" -> {
-                response = handlePut(rightPart);
+                response = ClientHandlerUtils.handlePut(rightPart, mainDB);
             }
             case "GET" -> { // Searches only in top level keys
-                response = handleGet(rightPart);
+                response = ClientHandlerUtils.handleGet(rightPart, mainDB);
             }
             case "QUERY" -> {
-                response = handleQuery(rightPart);
+                response = ClientHandlerUtils.handleQuery(rightPart, mainDB);
             }
             case "INDEX" -> {
-                response = handleIndex(rightPart);
+                response = ClientHandlerUtils.handleIndex(rightPart, mainDB);
             }
             case "DELETE" -> {
-                response = handleDelete(rightPart);
+                response = ClientHandlerUtils.handleDelete(rightPart, mainDB);
             }
             case "COMPUTE" -> {
-                response = handleCompute(rightPart);
+                response = ClientHandlerUtils.handleCompute(rightPart, mainDB);
             }
             default -> response = "ERROR: " + commandType;
         }
         return response;
     }
-
-    private String handlePut(String rightPart) {
-        ServerUtils.saveKey(rightPart, mainDB);
-        logger.info("KEY INSERTED");
-        return "KEY INSERTED " + rightPart;
-    }
-
-    private String handleGet(String rightPart) {
-        TrieNode keyValue = mainDB.find(rightPart);
-        if (keyValue != null) {
-            Trie keyToFind = (Trie) keyValue.getValue();
-            return rightPart + " -> " + TrieUtils.getKey(keyToFind);
-        } else {
-            return "KEY WAS NOT FOUND";
-        }
-    }
-
-    private String handleQuery(String rightPart) {
-        Object key = ServerUtils.findKey(rightPart, mainDB);
-        if (key != null && key instanceof Trie) {
-            return rightPart + " -> " + TrieUtils.getKey((Trie) key);
-        } else if (key != null && key instanceof String) {
-            return rightPart + " -> " + key;
-        } else {
-            return "KEY WAS NOT FOUND";
-        }
-    }
-
-    private String handleIndex(String rightPart) {
-        Set<String> indexFile = IO.readFile(rightPart);
-        for (String _key : indexFile) {
-            ServerUtils.saveKey(_key, mainDB);
-            logger.info("IMPORTED KEY" + _key);
-        }
-        logger.info("FILE INDEXED");
-        return "FILE INDEXED";
-    }
-
-    private String handleDelete(String rightPart) {
-        boolean keyDeleted = ServerUtils.delete(rightPart, mainDB);
-        if (keyDeleted) {
-            return "KEY DELETED SUCCESSFULLY";
-        } else {
-            return "THERE WAS AN ERROR DELETING KEY: " + rightPart;
-        }
-    }
-
-    private String handleCompute(String rightPart) {
-
-        String strExpression = rightPart.substring(0, rightPart.indexOf("WHERE ") - 1);
-
-        String[] queryParameters = rightPart.substring(rightPart.indexOf("WHERE ") + 6, rightPart.length()).split("AND");
-
-        HashMap<String, Double> parameters = new HashMap<>();
-
-        for (String parameter : queryParameters) {
-            String[] queryArray = parameter.split("=");
-            String variable = queryArray[0].trim();
-            String query = queryArray[1].replace("QUERY ", "").trim();
-
-            String resolvedValue = handleQuery(query);
-            String parsedResolvedValue = resolvedValue.substring(resolvedValue.indexOf(" -> ") + 4, resolvedValue.length());
-            parameters.put(variable, Double.valueOf(parsedResolvedValue));
-        }
-
-        Expression expression = new ExpressionBuilder(strExpression)
-                .variables(parameters.keySet())
-                .build();
-
-        for (Map.Entry<String, Double> entry : parameters.entrySet()) {
-            expression.setVariable(entry.getKey(), entry.getValue());
-        }
-
-        return String.valueOf(expression.evaluate());
-    }
-
-
 }

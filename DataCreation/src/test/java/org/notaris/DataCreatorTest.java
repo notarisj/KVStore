@@ -4,7 +4,7 @@ class DataCreatorTest {
 
     @org.junit.jupiter.api.Test
     void create100RandomKeys() {
-        String[] args = {"-n", "1000000", "-m", "5", "-d", "5", "-l" , "50", "-k", "/Users/notaris/Desktop/keyFile.txt"};
+        String[] args = {"-n", "3000000", "-m", "5", "-d", "3", "-l" , "4", "-k", "C:\\Users\\Notaris\\Desktop\\keyFile.txt"};
         DataCreator dc = new DataCreator();
         dc.main(args);
     }

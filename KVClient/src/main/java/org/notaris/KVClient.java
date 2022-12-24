@@ -3,6 +3,7 @@ package org.notaris;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -10,7 +11,7 @@ import java.util.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.notaris.utils.SocketStruct;
+import org.notaris.utils.ServerStruct;
 
 
 public class KVClient {
@@ -22,7 +23,7 @@ public class KVClient {
         Scanner scanner = new Scanner(System.in);
         DateFormat df = new SimpleDateFormat("mm:ss:SSS");
 
-        String[] args = {"-s", "/Users/notaris/Desktop/serverFile.txt", "-i", "/Users/notaris/Desktop/dataToIndex.txt",  "-k",  "1"};
+        String[] args = {"-s", "C:\\Users\\Notaris\\Desktop\\serverFile.txt", "-i", "C:\\Users\\Notaris\\Desktop\\dataToIndex.txt",  "-k",  "2"};
 
         Set<String> serverFile = null;
         Set<String> dataToIndex = null;
@@ -42,7 +43,7 @@ public class KVClient {
         // 1. Connect to all servers
 
         // Create a list to hold the sockets
-        List<SocketStruct> sockets = new ArrayList<>();
+        List<ServerStruct> servers = new ArrayList<>();
 
         // Loop over the list of server addresses and ports
         for (String server : serverFile) {
@@ -55,7 +56,7 @@ public class KVClient {
             logger.info("Connected to server successfully.");
 
             // Add the socket to the list of sockets
-            sockets.add(new SocketStruct(socket));
+            servers.add(new ServerStruct(socket));
         }
 
         // 2. Index Data
@@ -63,10 +64,10 @@ public class KVClient {
         boolean indexOk = true;
         int i = 1;
         for (String key : dataToIndex) {
-            Collections.shuffle(sockets);
-            List<SocketStruct> randomSockets = sockets.subList(0, replicationFactor);
+            Collections.shuffle(servers);
+            List<ServerStruct> randomSockets = servers.subList(0, replicationFactor);
             //logger.info("Key to be inserted: " + key);
-            for (SocketStruct server : randomSockets) {
+            for (ServerStruct server : randomSockets) {
 
                 System.out.println("BEFORE key index server: " + server.toString());
 
@@ -96,53 +97,130 @@ public class KVClient {
 
         // Loop until the user enters "exit"
         while (true) {
-            Collections.shuffle(sockets);
-//            List<SocketStruct> randomSockets = sockets.subList(0, replicationFactor + 1);
-            List<SocketStruct> randomSockets = sockets.subList(0, replicationFactor);
+            Collections.shuffle(servers);
+
 
             // Prompt the user to enter a message to send to the server
             System.out.print("kvserver# ");
-            String command = scanner.nextLine();
-            if (StringUtils.equals(command, "")) continue;
+            String userCommand = scanner.nextLine();
+            if (StringUtils.equals(userCommand, "")) continue;
 
-            for (SocketStruct server : randomSockets) {
+
+            String[] command = UserCommandUtils.readCommand(userCommand);
+            String commandType = command[0];
+
+
+            String response = null;
+
+            switch (commandType) {
+                case "PUT" -> {
+                    List<ServerStruct> socketsToSend = servers.subList(0, replicationFactor);
+                    response = execute(socketsToSend, userCommand, commandType);
+                }
+                case "GET", "COMPUTE", "QUERY" -> { // Searches only in top level keys
+                    List<ServerStruct> socketsToSend = servers.subList(0, replicationFactor + 1);
+                    response = execute(socketsToSend, userCommand, commandType);
+                }
+                case "DELETE" -> {
+                    if (allServersConnected(servers)) {
+                        response = execute(servers, userCommand, commandType);
+                    } else {
+                        response = "SOME SERVERS ARE OFFLINE. CANNOT PERFORM DELETE.";
+                    }
+                }
+            }
+            System.out.println(response);
+
+
+        }
+    }
+
+    private static String execute(List<ServerStruct> servers, String userCommand, String commandType) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        String latestResponse = null;
+        for (ServerStruct server : servers) {
+            if (server.isConnected) {
                 // Send the message to the server
                 //server.out.println(message);
-                server.out.write(command + "\n");
+                server.out.write(userCommand + "\n");
                 server.out.flush();
 
                 // Check if the user entered "exit" to quit the program
-                if (command.equalsIgnoreCase("exit")) {
+                if (userCommand.equalsIgnoreCase("exit")) {
                     break;
                 }
 
-                String[] commandArray = UserCommandUtils.readCommand(command);
-                String commandType = commandArray[0];
-                String rightPart = commandArray[1];
-
                 String response = getStringFromBufferedReader(server.in);
-                switch (commandType) {
-                    case "QUERY":
-                        if (response.contains(rightPart)) {
-                            System.out.println(response);
-                            break;
+
+                if (!StringUtils.equals(response, "BAD SERVER")) {
+                    if (StringUtils.equals(response.substring(0, 1), "0")) { // ALL OK
+                        if (StringUtils.equals(commandType, "GET") ||
+                                StringUtils.equals(commandType, "COMPUTE") ||
+                                StringUtils.equals(commandType, "QUERY")) {
+                            return new StringBuilder()
+                                    .append("\n")
+                                    .append(response.substring(2)) // remove code (0 or 1) from response
+                                    .append("\n")
+                                    .toString();
+                        } else {
+                            sb.append("\n")
+                                    .append("Server: ")
+                                    .append(server.socket.getInetAddress().toString().replace("/", ""))
+                                    .append(":")
+                                    .append(server.socket.getLocalPort())
+                                    .append("\n")
+                                    .append(response.substring(2)) // remove code (0 or 1) from response
+                                    .append("\n");
                         }
-                        break;
-                    case "DELETE", "PUT", "GET", "COMPUTE":
-                        System.out.println(response);
-                        break;
+                    } else if (StringUtils.equals(response.substring(0, 1), "1")) {
+                        latestResponse = new StringBuilder()
+                                .append("\n")
+                                .append(response.substring(2)) // remove code (0 or 1) from response
+                                .append("\n")
+                                .toString();
+                    }
+                } else {
+                    server.isConnected = false;
+                    server.socket.close();
+                    server.in.close();
+                    server.out.close();
                 }
             }
         }
+        if (sb.isEmpty()) {
+            return latestResponse;
+        } else {
+            return sb.toString();
+        }
+    }
+
+    private static Boolean allServersConnected(List<ServerStruct> servers) {
+        boolean allConnected = true;
+        for (ServerStruct server : servers) {
+            if (!server.isConnected) {
+                allConnected = false;
+                break;
+            }
+        }
+        return allConnected;
     }
 
     public static String getStringFromBufferedReader(BufferedReader in) throws IOException {
         StringBuilder sb = new StringBuilder();
-        String line = in.readLine();
-        while (!StringUtils.equals(line, "END")) {
-            sb.append(line);
-            line = in.readLine();
+        try {
+            String line = in.readLine();
+            while (!StringUtils.equals(line, "END")) {
+                sb.append(line).append("\n");
+                line = in.readLine();
+            }
+        } catch (SocketException e) {
+            return "BAD SERVER";
         }
-        return sb.toString();
+        if (sb.isEmpty()) {
+            return sb.toString();
+        } else {
+            return sb.toString().substring(0,sb.length() - 2);
+        }
+
     }
 }
