@@ -60,22 +60,27 @@ public class TrieUtils {
     /**
      * Searches the Trie for the word given. If the word exists it
      * will return the TrieNode of the last character of the word.
-     * @param word
-     * @return
+     * @param word String to search
+     * @param trie Trie db
+     * @return The TrieNode of the last character of the given word
      */
     public static TrieNode find(String word, Trie trie) {
-        TrieNode current = trie.getRoot();
-        for (int i = 0; i < word.length(); i++) {
-            char ch = word.charAt(i);
-            TrieNode node = current.getChildren().get(ch);
-            if (node == null) {
+        try {
+            TrieNode current = trie.getRoot();
+            for (int i = 0; i < word.length(); i++) {
+                char ch = word.charAt(i);
+                TrieNode node = current.getChildren().get(ch);
+                if (node == null) {
+                    return null;
+                }
+                current = node;
+            }
+            if (current.getEndOfWord()) {
+                return current;
+            } else {
                 return null;
             }
-            current = node;
-        }
-        if (current.getEndOfWord()) {
-            return current;
-        } else {
+        } catch (Exception e) {
             return null;
         }
     }
@@ -127,21 +132,14 @@ public class TrieUtils {
         StringBuilder builder = new StringBuilder();
         HashMap<String, TrieNode> children = new HashMap<>();
         findChildren(trieNode, builder, children, true);
-        if (children != null) {
-
-            for (Map.Entry<String, TrieNode> child : children.entrySet()) {
-
-                Object value = child.getValue().getValue();
-
-                if (value instanceof Trie) {
-                    finalKey.put(child.getKey(), new JSONObject());
-                    createJSONObject(((Trie) value).getRoot(), (JSONObject) finalKey.get(child.getKey()));
-                } else if (value instanceof String) {
-                    finalKey.put(child.getKey(), value);
-                }
-
+        for (Map.Entry<String, TrieNode> child : children.entrySet()) {
+            Object value = child.getValue().getValue();
+            if (value instanceof Trie) {
+                finalKey.put(child.getKey(), new JSONObject());
+                createJSONObject(((Trie) value).getRoot(), (JSONObject) finalKey.get(child.getKey()));
+            } else if (value instanceof String) {
+                finalKey.put(child.getKey(), value);
             }
-
         }
     }
 
@@ -150,18 +148,16 @@ public class TrieUtils {
         if (children != null) {
             for (Map.Entry<Character, TrieNode> child : children.entrySet()) {
                 currName.append(child.getKey());
-                if (child.getValue().getEndOfWord() == true) {
+                if (child.getValue().getEndOfWord()) {
                     finalChildren.put(currName.toString(), child.getValue());
                     findChildren(child.getValue(), currName, finalChildren, false);
                 } else {
                     findChildren(child.getValue(), currName, finalChildren, true);
                 }
             }
-        } else if (trieNode.getValue() instanceof Trie && allowNest == true) {
-            Trie trie = (Trie) trieNode.getValue();
+        } else if (trieNode.getValue() instanceof Trie trie && allowNest) {
             findChildren(trie.getRoot(), currName, finalChildren, false);
         }
         if (currName.length() >= 1) currName.deleteCharAt(currName.length() - 1);
     }
-
 }

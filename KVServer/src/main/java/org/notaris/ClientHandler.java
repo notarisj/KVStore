@@ -13,7 +13,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
 class ClientHandler implements Runnable {
-    private Socket clientSocket;
+    private final Socket clientSocket;
     private final String user;
     private static final Logger logger = LogManager.getLogger(ClientHandler.class);
     private Trie mainDB;
@@ -54,38 +54,23 @@ class ClientHandler implements Runnable {
                     break;
                 }
             }
-
         } catch (IOException e) {
             logger.info("Connection with " + user + " was disconnected unexpectedly");
         }
     }
 
     private String handleCommand(String userCommand) {
-
         String[] command = UserCommandUtils.readCommand(userCommand);
-        String commandType = command[0];
+        String commandType = command[0].toUpperCase();
         String rightPart = command[1];
         String response;
 
         switch (commandType) {
-            case "PUT" -> {
-                response = ClientHandlerUtils.handlePut(rightPart, mainDB);
-            }
-            case "GET" -> { // Searches only in top level keys
-                response = ClientHandlerUtils.handleGet(rightPart, mainDB);
-            }
-            case "QUERY" -> {
-                response = ClientHandlerUtils.handleQuery(rightPart, mainDB);
-            }
-            case "INDEX" -> {
-                response = ClientHandlerUtils.handleIndex(rightPart, mainDB);
-            }
-            case "DELETE" -> {
-                response = ClientHandlerUtils.handleDelete(rightPart, mainDB);
-            }
-            case "COMPUTE" -> {
-                response = ClientHandlerUtils.handleCompute(rightPart, mainDB);
-            }
+            case "PUT" -> response = ClientHandlerUtils.handlePut(rightPart, mainDB);
+            case "GET" -> response = ClientHandlerUtils.handleGet(rightPart, mainDB);
+            case "QUERY" -> response = ClientHandlerUtils.handleQuery(rightPart, mainDB);
+            case "DELETE" -> response = ClientHandlerUtils.handleDelete(rightPart, mainDB);
+            case "COMPUTE" -> response = ClientHandlerUtils.handleCompute(rightPart, mainDB);
             default -> response = "ERROR: " + commandType;
         }
         return response;

@@ -66,7 +66,6 @@ public class DataCreator {
             Integer nesting = 0;
             KeyUtils.createValue(key.getRoot(), nesting, maxKeys, maxNesting, maxStrLength, keyFile);
             KeyUtils.cleanUpParentValues(key.getRoot());
-            //System.out.println(KeyUtils.cleanUpJSON(KeyUtils.convertToJSON(key).replace("\"root\"", "\"key" + i + "\"")));
             String _key = KeyUtils.cleanUpJSON(KeyUtils.convertToJSON(key).replace("\"root\"", "\"key" + i + "\"")).replace("\"root\"", "\"key" + i +"\"");
             outputFile.add(_key);
             logger.info(_key);

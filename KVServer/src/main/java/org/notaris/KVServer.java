@@ -1,7 +1,5 @@
 package org.notaris;
 
-import net.objecthunter.exp4j.Expression;
-import net.objecthunter.exp4j.ExpressionBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.notaris.tree.trie.Trie;
@@ -9,10 +7,7 @@ import org.notaris.tree.trie.TrieNode;
 
 import java.io.*;
 import java.net.*;
-
 import java.util.HashMap;
-import java.util.Scanner;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,8 +18,9 @@ public class KVServer {
     public static Trie mainDB = new Trie(new TrieNode(new HashMap<>()));
 
     public static void main(String[] args) throws IOException {
+
         String ipAddress = "127.0.0.1";
-        int port = 9999;
+        int port = 10000;
 
         // parse command-line arguments
         for (int i = 0; i < args.length; i++) {
@@ -48,7 +44,6 @@ public class KVServer {
         logger.info("KVServer is UP and listening on port: " + port);
 
         while (true) {
-
             // Accept an incoming connection from a client
             Socket clientSocket = serverSocket.accept();
             logger.info("A new user (" + clientSocket.getInetAddress().toString().replace("/", "") +
@@ -57,5 +52,4 @@ public class KVServer {
             threadPool.submit(new ClientHandler(clientSocket, mainDB));
         }
     }
-
 }

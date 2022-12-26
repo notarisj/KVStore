@@ -14,7 +14,7 @@ public class IO {
      * Returns a String list with every line of the text file.
      *
      * @param path The path of the input file.
-     * @return List of strings with every file line.
+     * @return Set of strings with every file line.
      */
     public static Set<String> readFile(String path) {
         try {
@@ -45,7 +45,7 @@ public class IO {
      * @param path      The path to create the file or file name for the default directory.
      * @param writeFile List of strings with every file line.
      */
-    public static boolean writeFile(String path, List<String> writeFile) {
+    public static void writeFile(String path, List<String> writeFile) {
         try {
             FileWriter writer = new FileWriter(path, false);
 
@@ -54,11 +54,9 @@ public class IO {
                 writer.write("\r\n");   // write new line
             }
             writer.close();
-            return true;
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return false;
     }
 
 }
