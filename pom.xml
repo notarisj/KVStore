@@ -14,6 +14,7 @@
         <module>KVServer</module>
         <module>KVClient</module>
         <module>Utils</module>
+        <module>DataCreationV2</module>
     </modules>
 
     <properties>

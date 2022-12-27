@@ -72,5 +72,8 @@ public class ServerUtils {
                 TrieUtils.find(parentKeyName, mainDB).setValue(parentTrie);
             }
         }
+        if (jsonObject.isEmpty()) {
+            TrieUtils.find(parentKeyName, mainDB).setValue(null);
+        }
     }
 }

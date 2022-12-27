@@ -2,6 +2,7 @@ package org.notaris;
 
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
+import org.apache.commons.lang3.StringUtils;
 import org.notaris.tree.trie.Trie;
 import org.notaris.tree.trie.TrieNode;
 import org.notaris.tree.trie.TrieUtils;
@@ -20,6 +21,20 @@ public class ClientHandlerUtils {
     }
 
     protected static String handleGet(String rightPart, Trie mainDB) {
+        if (StringUtils.equals(rightPart, "*")) {
+            StringBuilder builder = new StringBuilder();
+            HashMap<String, TrieNode> children = new HashMap<>();
+            TrieUtils.findChildren(mainDB.getRoot(), builder, children, true);
+
+            StringBuilder sb = new StringBuilder();
+
+            for (String key : children.keySet()) {
+                sb.append(key).append("\n");
+            }
+
+            String keys = sb.toString();
+            return SCConstants.RESPONSE_OK + "\n" + keys;
+        }
         TrieNode keyValue = TrieUtils.find(rightPart, mainDB);
         if (keyValue != null) {
             Trie keyToFind = (Trie) keyValue.getValue();
