@@ -3,6 +3,7 @@ package org.notaris.tree.trie;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 
 public class TrieUtils {
@@ -119,13 +120,17 @@ public class TrieUtils {
     }
 
     public static String getKey(Trie trie) {
-        JSONObject obj = new JSONObject();
-        TrieUtils.createJSONObject(trie.getRoot(), obj);
-        return obj.toString()
-                .replace(":", " -> ")
-                .replace(",", " | ")
-                .replace("{", "[")
-                .replace("}", "]");
+        if (trie != null) {
+            JSONObject obj = new JSONObject();
+            TrieUtils.createJSONObject(trie.getRoot(), obj);
+            return obj.toString()
+                    .replace(":", " -> ")
+                    .replace(",", " | ")
+                    .replace("{", "[")
+                    .replace("}", "]");
+        } else {
+            return "[]";
+        }
     }
 
     public static void createJSONObject(TrieNode trieNode, JSONObject finalKey) {
@@ -139,6 +144,8 @@ public class TrieUtils {
                 createJSONObject(((Trie) value).getRoot(), (JSONObject) finalKey.get(child.getKey()));
             } else if (value instanceof String) {
                 finalKey.put(child.getKey(), value);
+            } else if (value == null) {
+                finalKey.put(child.getKey(), new JSONObject());
             }
         }
     }

@@ -101,7 +101,7 @@ public class KVClient {
                 System.out.println(response);
             }
         } else {
-            logger.info("No arguments where provided. Quiting KVServer...");
+            logger.info("No arguments where provided. Quiting KVClient...");
         }
     }
 
