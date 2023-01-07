@@ -126,7 +126,7 @@ public class TrieUtils {
             if (keyHasOneAttrAndEmptyValue(obj)) {
                 return obj.keys().next();
             } else {
-                return obj.toString()
+                return obj.toString(4)
                         .replace(":", " -> ")
                         .replace(",", " | ")
                         .replace("{", "[")
