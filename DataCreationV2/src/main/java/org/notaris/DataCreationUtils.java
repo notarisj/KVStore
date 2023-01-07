@@ -10,24 +10,34 @@ import java.util.UUID;
 
 public class DataCreationUtils {
 
-    public static void createValue(JSONObject node, Integer nesting, Integer maxKeys, Integer maxNesting,
-                                     Integer maxStrLength, Set<String> keyFile, Integer numberOfChildren) {
+    /**
+     * Generates a random value for the KVStore with the given parameters.
+     * @param key The JSONObject used to represent the key.
+     * @param nesting It is used to know the nesting level when using recursion, so we don't exceed the maximum nesting.
+     * @param maxKeys The maximum number of keys (attributes) inside each value.
+     * @param maxNesting The maximum level of nesting a key is allowed.
+     * @param maxStrLength The maximum length of a string value.
+     * @param keyFile File with attribute names.
+     * @param numberOfChildren We must know the number of children of the newKey because if it's zero we must assign it a value.
+     */
+    public static void createRandomKey(JSONObject key, Integer nesting, Integer maxKeys, Integer maxNesting,
+                                       Integer maxStrLength, Set<String> keyFile, Integer numberOfChildren) {
         nesting++;
-        if (maxNesting <= nesting && nesting != 1) return;
+        if (maxNesting < nesting) return;
         for (int i = 0; i < numberOfChildren; i++) {
-            Object[] key = getRandomKey(keyFile, maxStrLength);
-            JSONObject newNode = new JSONObject();
+            Object[] randAttr = getRandomAttribute(keyFile, maxStrLength);
+            JSONObject newKey = new JSONObject();
             int newNumberOfChildren = RandomUtils.nextInt(0, maxKeys + 1);
-            if (newNumberOfChildren == 0 || nesting == maxNesting - 1) {
-                node.put(key[0].toString(), key[2].toString());
+            if (newNumberOfChildren == 0 || nesting.equals(maxNesting)) {
+                key.put(randAttr[0].toString(), randAttr[2].toString());
             } else {
-                node.put(key[0].toString(), newNode);
-                createValue(newNode, nesting, maxKeys, maxNesting, maxStrLength, keyFile, newNumberOfChildren);
+                key.put(randAttr[0].toString(), newKey);
+                createRandomKey(newKey, nesting, maxKeys, maxNesting, maxStrLength, keyFile, newNumberOfChildren);
             }
         }
     }
 
-    private static Object[] getRandomKey(Set<String> keyFile, Integer maxStrLength) {
+    protected static Object[] getRandomAttribute(Set<String> keyFile, Integer maxStrLength) {
         if (!keyFile.isEmpty()) {
             int item = RandomUtils.nextInt(1, keyFile.size());
             int i = 1;
@@ -53,10 +63,10 @@ public class DataCreationUtils {
         }
 
         String uuid = UUID.randomUUID().toString();
-        return new Object[] {uuid, RandomUtils.nextInt(1, 4), getValue(maxStrLength)};
+        return new Object[] {uuid, RandomUtils.nextInt(1, 4), getRandomValue(maxStrLength)};
     }
 
-    private static Object getValue(Integer maxStrLength) {
+    private static Object getRandomValue(Integer maxStrLength) {
         return getValue(RandomUtils.nextInt(1, 4), maxStrLength);
     }
 

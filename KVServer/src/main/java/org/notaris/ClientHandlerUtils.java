@@ -9,6 +9,8 @@ import org.notaris.tree.trie.TrieUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ClientHandlerUtils {
 
@@ -25,13 +27,10 @@ public class ClientHandlerUtils {
             StringBuilder builder = new StringBuilder();
             HashMap<String, TrieNode> children = new HashMap<>();
             TrieUtils.findChildren(mainDB.getRoot(), builder, children, true);
-
             StringBuilder sb = new StringBuilder();
-
             for (String key : children.keySet()) {
                 sb.append(key).append("\n");
             }
-
             String keys = sb.toString();
             return SCConstants.RESPONSE_OK + "\n" + keys;
         }
@@ -65,6 +64,10 @@ public class ClientHandlerUtils {
     }
 
     protected static String handleCompute(String rightPart, Trie mainDB) {
+
+        rightPart = handleCase(rightPart, "where", "WHERE");
+        rightPart = handleCase(rightPart, "query", "QUERY");
+
         try {
             String strExpression = rightPart.substring(0, rightPart.indexOf("WHERE ") - 1);
             String[] queryParameters = rightPart.substring(rightPart.indexOf("WHERE ") + 6).split("AND");
@@ -96,6 +99,12 @@ public class ClientHandlerUtils {
         } catch (IndexOutOfBoundsException e2) { // substrings
             return SCConstants.RESPONSE_WARN + "\nTHERE WAS AN ERROR IN THE SYNTAX OF THE QUERY";
         }
+    }
+
+    private static String handleCase(String str, String search, String replacement) {
+        Pattern pattern = Pattern.compile(search);
+        Matcher matcher = pattern.matcher(str);
+        return matcher.replaceAll(replacement);
     }
 
 }
