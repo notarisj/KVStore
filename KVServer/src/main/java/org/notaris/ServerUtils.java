@@ -22,14 +22,10 @@ public class ServerUtils {
         return json;
     }
 
-    protected static String getKeyName(String key) {
-        return key.substring(0, key.indexOf(" -> ")).replace("\"", "");
-    }
-
     public static Trie saveKey(String key, Trie mainDB) {
         try {
             JSONObject jsonObject = new JSONObject(convertToJSON(key));
-            String keyName = getKeyName(key);
+            String keyName = SCUtils.getKeyName(key);
             TrieUtils.insert(keyName, mainDB);
             indexJSONObject(jsonObject, mainDB, keyName);
             // INSERT WAS OK
@@ -65,15 +61,15 @@ public class ServerUtils {
             Object value = jsonObject.get(key);
             if (value instanceof JSONObject) {
                 TrieUtils.insert(key, parentTrie);
-                TrieUtils.find(parentKeyName, mainDB).setValue(parentTrie);
+                Objects.requireNonNull(TrieUtils.find(parentKeyName, mainDB)).setValue(parentTrie);
                 indexJSONObject((JSONObject) value, parentTrie, key);
             } else {
                 TrieUtils.insert(key, value, parentTrie);
-                TrieUtils.find(parentKeyName, mainDB).setValue(parentTrie);
+                Objects.requireNonNull(TrieUtils.find(parentKeyName, mainDB)).setValue(parentTrie);
             }
         }
         if (jsonObject.isEmpty()) {
-            TrieUtils.find(parentKeyName, mainDB).setValue(null);
+            Objects.requireNonNull(TrieUtils.find(parentKeyName, mainDB)).setValue(null);
         }
     }
 }

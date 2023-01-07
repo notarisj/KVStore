@@ -1,9 +1,9 @@
 package org.notaris.tree.trie;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 
 public class TrieUtils {
@@ -123,13 +123,40 @@ public class TrieUtils {
         if (trie != null) {
             JSONObject obj = new JSONObject();
             TrieUtils.createJSONObject(trie.getRoot(), obj);
-            return obj.toString()
-                    .replace(":", " -> ")
-                    .replace(",", " | ")
-                    .replace("{", "[")
-                    .replace("}", "]");
+            if (keyHasOneAttrAndEmptyValue(obj)) {
+                return obj.keys().next();
+            } else {
+                return obj.toString()
+                        .replace(":", " -> ")
+                        .replace(",", " | ")
+                        .replace("{", "[")
+                        .replace("}", "]");
+            }
         } else {
             return "[]";
+        }
+    }
+
+    private static Boolean keyHasOneAttrAndEmptyValue(JSONObject obj) {
+
+        /*
+        If the top level key has zero nesting (i.e. key1 -> "Hello") when
+        the user gets the key the response has this format: key1 -> ["Hello" -> ""].
+        So we match with regex and if the value after the "Hello" (attr2) is empty
+        we format the response as follows: key1 -> "Hello".
+         */
+
+        Iterator<String> keys = obj.keys();
+        if (keys.hasNext()) {
+            String key = keys.next();
+            if (keys.hasNext()) {
+                return false;
+            } else {
+                Object value = obj.opt(key);
+                return value instanceof String && ((String) value).isEmpty();
+            }
+        } else {
+            return false;
         }
     }
 

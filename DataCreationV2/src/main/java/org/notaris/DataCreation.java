@@ -1,7 +1,6 @@
 package org.notaris;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
@@ -9,6 +8,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import static org.notaris.DataCreationUtils.getRandomAttribute;
 
 public class DataCreation {
 
@@ -23,6 +24,7 @@ public class DataCreation {
 
     public static void main(String[] args) {
 
+        // Read parameters from user
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case "-n" -> size = Integer.valueOf(args[i + 1]);
@@ -41,18 +43,23 @@ public class DataCreation {
             keyFile = IO.readFile(keyFilePath);
             JSONObject key = new JSONObject();
             int num = RandomUtils.nextInt(0, maxKeys + 1);
-            DataCreationUtils.createValue(key, nesting, maxKeys, maxNesting, maxStrLength, keyFile, num);
+            DataCreationUtils.createRandomKey(key, nesting, maxKeys, maxNesting, maxStrLength, keyFile, num);
 
-            String _key = "key" + i + " -> " + DataCreationUtils.convertFromJSON(key);
+            String _key;
+            if (key.isEmpty()) {
+                Object[] randomKey = getRandomAttribute(keyFile, maxStrLength);
+                _key = "key" + i + " -> \"" + randomKey[2].toString() + "\"";
+            } else {
+                _key = "key" + i + " -> " + DataCreationUtils.convertFromJSON(key);
+            }
             outputFile.add(_key);
             logger.info(_key);
         }
         logger.info("All keys generated successfully!");
         logger.info("Trying to write output file...");
-        IO.writeFile("/Users/notaris/Desktop//outputFile.txt", outputFile);
-        logger.info("Output file generated successfully!");
-
-
+        String outputPath = System.getProperty("user.home") + "\\Desktop\\outputFile.txt";
+        IO.writeFile(outputPath, outputFile);
+        logger.info("Output file generated successfully at " + outputPath);
     }
 
 }
