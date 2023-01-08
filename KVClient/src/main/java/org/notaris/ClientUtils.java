@@ -1,5 +1,7 @@
 package org.notaris;
 
+import net.objecthunter.exp4j.Expression;
+import net.objecthunter.exp4j.ExpressionBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,10 +10,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ClientUtils {
 
@@ -104,15 +105,15 @@ public class ClientUtils {
 
                 // continue if key was not found
                 List<ServerStruct> socketsToSend = servers.subList(0, replicationFactor);
-                return executeCommand(socketsToSend, userCommand);
+                return executeCommand(socketsToSend, userCommand, replicationFactor);
             }
             case "GET", "COMPUTE", "QUERY" -> { // Searches only in top level keys
-                List<ServerStruct> socketsToSend = servers.subList(0, replicationFactor + 1);
-                return executeCommand(socketsToSend, userCommand);
+                List<ServerStruct> socketsToSend = servers.subList(0, servers.size() + 1 - replicationFactor);
+                return executeCommand(socketsToSend, userCommand, replicationFactor);
             }
             case "DELETE" -> {
                 if (allServersConnected(servers)) {
-                    return executeCommand(servers, userCommand);
+                    return executeCommand(servers, userCommand, replicationFactor);
                 } else {
                     return "SOME SERVERS ARE OFFLINE. CANNOT PERFORM DELETE.";
                 }
@@ -132,7 +133,7 @@ public class ClientUtils {
      */
     private static Boolean checkIfKeyExists(String keyName, List<ServerStruct> servers, int replicationFactor) throws IOException {
         // Check if key already exists
-        String response = executeCommand(servers.subList(0, replicationFactor + 1), "GET " + keyName);
+        String response = executeCommand(servers.subList(0, servers.size() + 1 - replicationFactor), "GET " + keyName, replicationFactor);
         return response.contains(keyName);
     }
 
@@ -143,10 +144,14 @@ public class ClientUtils {
      * @param userCommand The command of the user.
      * @return The response of the server.
      */
-    private static String executeCommand(List<ServerStruct> servers, String userCommand) throws IOException {
+    private static String executeCommand(List<ServerStruct> servers, String userCommand, int replicationFactor) throws IOException {
 
         String[] command = UserCommandUtils.readCommand(userCommand);
         String commandType = command[0].toUpperCase();
+
+        if (StringUtils.equals(commandType, "COMPUTE")) {
+            return handleCompute(command[1], servers, replicationFactor);
+        }
 
         StringBuilder sb = new StringBuilder();
         String latestResponse = null;
@@ -162,9 +167,7 @@ public class ClientUtils {
                 if (!StringUtils.equals(response, "BAD SERVER")) {
                     if (StringUtils.equals(response.substring(0, 1), SCConstants.RESPONSE_OK)) {
                         if (StringUtils.equals(commandType, "GET") ||
-                                StringUtils.equals(commandType, "COMPUTE") ||
                                 StringUtils.equals(commandType, "QUERY")) {
-                            //return handleGetResponse(response);
                             return response.substring(2);
                         } else {
                             sb.append("\nServer: ")
@@ -193,6 +196,52 @@ public class ClientUtils {
         } else {
             return sb.toString();
         }
+    }
+
+    protected static String handleCompute(String rightPart, List<ServerStruct> servers, int replicationFactor) {
+
+        rightPart = handleCase(rightPart, "where", "WHERE");
+        rightPart = handleCase(rightPart, "query", "QUERY");
+        rightPart = handleCase(rightPart, "and", "AND");
+
+        try {
+            String strExpression = rightPart.substring(0, rightPart.indexOf("WHERE ") - 1);
+            String[] queryParameters = rightPart.substring(rightPart.indexOf("WHERE ") + 6).split("AND");
+            HashMap<String, Double> parameters = new HashMap<>();
+
+            for (String parameter : queryParameters) {
+                String[] queryArray = parameter.split("=");
+                String variable = queryArray[0].trim();
+                String query = queryArray[1].replace("QUERY ", "").trim();
+                String resolvedValue = executeCommand(servers.subList(0, servers.size() + 1 - replicationFactor), "QUERY " + query, replicationFactor);
+                String parsedResolvedValue = resolvedValue.substring(resolvedValue.indexOf(" -> ") + 4).split("\n")[0];
+                parameters.put(variable, Double.valueOf(parsedResolvedValue));
+            }
+
+            Expression expression = new ExpressionBuilder(strExpression)
+                    .variables(parameters.keySet())
+                    .build();
+
+            for (Map.Entry<String, Double> entry : parameters.entrySet()) {
+                expression.setVariable(entry.getKey(), entry.getValue());
+            }
+
+            return String.valueOf(expression.evaluate());
+        } catch (NumberFormatException e3) { // Double.valueOf(parsedResolvedValue)
+            return "\nPROVIDED VARIABLES ARE NOT NUMERIC";
+        } catch (IllegalArgumentException e1) { // new ExpressionBuilder(strExpression)
+            return "\nMATH EXPRESSION CANNOT BE EMPTY";
+        } catch (IndexOutOfBoundsException e2) { // substrings
+            return "\nTHERE WAS AN ERROR IN THE SYNTAX OF THE QUERY";
+        } catch (IOException e) {
+            return "\nTHERE WAS AN ERROR WHILE READING THE COMMAND";
+        }
+    }
+
+    private static String handleCase(String str, String search, String replacement) {
+        Pattern pattern = Pattern.compile(search);
+        Matcher matcher = pattern.matcher(str);
+        return matcher.replaceAll(replacement);
     }
 
     /**

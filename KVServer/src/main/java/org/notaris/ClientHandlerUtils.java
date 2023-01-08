@@ -63,48 +63,4 @@ public class ClientHandlerUtils {
         }
     }
 
-    protected static String handleCompute(String rightPart, Trie mainDB) {
-
-        rightPart = handleCase(rightPart, "where", "WHERE");
-        rightPart = handleCase(rightPart, "query", "QUERY");
-
-        try {
-            String strExpression = rightPart.substring(0, rightPart.indexOf("WHERE ") - 1);
-            String[] queryParameters = rightPart.substring(rightPart.indexOf("WHERE ") + 6).split("AND");
-            HashMap<String, Double> parameters = new HashMap<>();
-
-            for (String parameter : queryParameters) {
-                String[] queryArray = parameter.split("=");
-                String variable = queryArray[0].trim();
-                String query = queryArray[1].replace("QUERY ", "").trim();
-
-                String resolvedValue = handleQuery(query, mainDB);
-                String parsedResolvedValue = resolvedValue.substring(resolvedValue.indexOf(" -> ") + 4);
-                parameters.put(variable, Double.valueOf(parsedResolvedValue));
-            }
-
-            Expression expression = new ExpressionBuilder(strExpression)
-                    .variables(parameters.keySet())
-                    .build();
-
-            for (Map.Entry<String, Double> entry : parameters.entrySet()) {
-                expression.setVariable(entry.getKey(), entry.getValue());
-            }
-
-            return SCConstants.RESPONSE_OK + "\n" + expression.evaluate();
-        } catch (NumberFormatException e3) { // Double.valueOf(parsedResolvedValue)
-            return SCConstants.RESPONSE_WARN + "\nPROVIDED VARIABLES ARE NOT NUMERIC";
-        } catch (IllegalArgumentException e1) { // new ExpressionBuilder(strExpression)
-            return SCConstants.RESPONSE_WARN + "\nMATH EXPRESSION CANNOT BE EMPTY";
-        } catch (IndexOutOfBoundsException e2) { // substrings
-            return SCConstants.RESPONSE_WARN + "\nTHERE WAS AN ERROR IN THE SYNTAX OF THE QUERY";
-        }
-    }
-
-    private static String handleCase(String str, String search, String replacement) {
-        Pattern pattern = Pattern.compile(search);
-        Matcher matcher = pattern.matcher(str);
-        return matcher.replaceAll(replacement);
-    }
-
 }

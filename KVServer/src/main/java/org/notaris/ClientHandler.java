@@ -70,7 +70,7 @@ class ClientHandler implements Runnable {
             case "GET" -> response = ClientHandlerUtils.handleGet(rightPart, mainDB);
             case "QUERY" -> response = ClientHandlerUtils.handleQuery(rightPart, mainDB);
             case "DELETE" -> response = ClientHandlerUtils.handleDelete(rightPart, mainDB);
-            case "COMPUTE" -> response = ClientHandlerUtils.handleCompute(rightPart, mainDB);
+            // case "COMPUTE" -> response = ClientHandlerUtils.handleCompute(rightPart, mainDB);
             default -> response = "ERROR: " + commandType;
         }
         return response;
