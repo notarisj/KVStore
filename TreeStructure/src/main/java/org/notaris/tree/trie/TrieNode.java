@@ -9,7 +9,6 @@ import java.util.HashMap;
 @Getter
 @Setter
 public class TrieNode extends TreeNode<Character, TrieNode> {
-
     private Object value;
     private Boolean endOfWord = false;
 
@@ -19,5 +18,4 @@ public class TrieNode extends TreeNode<Character, TrieNode> {
     public TrieNode(HashMap<Character, TrieNode> children) {
         setChildren(children);
     }
-
 }

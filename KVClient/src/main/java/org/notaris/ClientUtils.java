@@ -100,7 +100,7 @@ public class ClientUtils {
             case "PUT" -> {
                 String keyName = SCUtils.getKeyName(userCommand.substring(4));
                 if (checkIfKeyExists(keyName, servers, replicationFactor)) {
-                    return "\nKEY ALREADY EXISTS. YOU MUSTS DELETE IT FIRST\n";
+                    return "KEY ALREADY EXISTS. YOU MUSTS DELETE IT FIRST";
                 }
 
                 // continue if key was not found
@@ -108,8 +108,8 @@ public class ClientUtils {
                 return executeCommand(socketsToSend, userCommand, replicationFactor);
             }
             case "GET", "COMPUTE", "QUERY" -> { // Searches only in top level keys
-                List<ServerStruct> socketsToSend = servers.subList(0, servers.size() + 1 - replicationFactor);
-                return executeCommand(socketsToSend, userCommand, replicationFactor);
+                //List<ServerStruct> socketsToSend = servers.subList(0, servers.size() + 1 - replicationFactor);
+                return executeCommand(servers, userCommand, replicationFactor);
             }
             case "DELETE" -> {
                 if (allServersConnected(servers)) {
@@ -170,7 +170,7 @@ public class ClientUtils {
                                 StringUtils.equals(commandType, "QUERY")) {
                             return response.substring(2);
                         } else {
-                            sb.append("\nServer: ")
+                            sb.append("Server: ")
                                     .append(server.socket.getInetAddress().toString().replace("/", ""))
                                     .append(":")
                                     .append(server.socket.getLocalPort())
@@ -228,13 +228,13 @@ public class ClientUtils {
 
             return String.valueOf(expression.evaluate());
         } catch (NumberFormatException e3) { // Double.valueOf(parsedResolvedValue)
-            return "\nPROVIDED VARIABLES ARE NOT NUMERIC";
+            return "PROVIDED VARIABLES ARE NOT NUMERIC";
         } catch (IllegalArgumentException e1) { // new ExpressionBuilder(strExpression)
-            return "\nMATH EXPRESSION CANNOT BE EMPTY";
+            return "MATH EXPRESSION CANNOT BE EMPTY";
         } catch (IndexOutOfBoundsException e2) { // substrings
-            return "\nTHERE WAS AN ERROR IN THE SYNTAX OF THE QUERY";
+            return "THERE WAS AN ERROR IN THE SYNTAX OF THE QUERY";
         } catch (IOException e) {
-            return "\nTHERE WAS AN ERROR WHILE READING THE COMMAND";
+            return "THERE WAS AN ERROR WHILE READING THE COMMAND";
         }
     }
 
