@@ -8,6 +8,10 @@ import org.json.JSONObject;
 
 public class TrieUtils {
 
+    /**
+     * Inserts the given word to the trie
+     * @param word The word to be inserted.
+     */
     public static void insert(String word, Trie trie) {
         TrieNode current = trie.getRoot();
 
@@ -34,6 +38,12 @@ public class TrieUtils {
         current.setEndOfWord(true);
     }
 
+
+    /**
+     * Inserts the given word to the trie with a custom value.
+     * @param word The word to be inserted.
+     * @param value The value to be inserted.
+     */
     public static void insert(String word, Object value, Trie trie) {
         TrieNode current = trie.getRoot();
 
@@ -85,7 +95,7 @@ public class TrieUtils {
             return null;
         }
     }
-
+    
     public static Boolean delete(String key, Trie mainDB) {
         // find method will return != null only if the key is a top level key,
         // so we can delete it
@@ -119,7 +129,7 @@ public class TrieUtils {
         return false;
     }
 
-    public static String getKey(Trie trie) {
+    public static String convertTrieToPrettyString(Trie trie) {
         if (trie != null) {
             JSONObject obj = new JSONObject();
             TrieUtils.createJSONObject(trie.getRoot(), obj);
