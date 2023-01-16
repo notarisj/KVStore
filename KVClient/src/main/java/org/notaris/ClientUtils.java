@@ -98,6 +98,20 @@ public class ClientUtils {
 
         switch (commandType) {
             case "PUT" -> {
+
+                Matcher matcher;
+                Pattern pattern;
+
+                pattern = Pattern.compile("(?<!\\s)->(?!\\s)");
+                matcher = pattern.matcher(userCommand);
+                userCommand = matcher.replaceAll(" -> ");
+
+                pattern = Pattern.compile("\\|");
+                matcher = pattern.matcher(userCommand);
+                userCommand = matcher.replaceAll(" | ");
+
+                System.out.println(userCommand);
+
                 String keyName = SCUtils.getKeyName(userCommand.substring(4));
                 if (checkIfKeyExists(keyName, servers, replicationFactor)) {
                     return "KEY ALREADY EXISTS. YOU MUSTS DELETE IT FIRST";

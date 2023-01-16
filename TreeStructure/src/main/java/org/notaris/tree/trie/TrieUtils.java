@@ -137,7 +137,7 @@ public class TrieUtils {
                 return obj.keys().next();
             } else {
                 return obj.toString(4)
-                        .replace(":", " -> ")
+                        .replace(":", " ->")
                         .replace(",", " | ")
                         .replace("{", "[")
                         .replace("}", "]");
