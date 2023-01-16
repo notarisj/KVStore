@@ -164,7 +164,7 @@ public class ClientUtils {
 
                 String response = getStringFromBufferedReader(server.in);
 
-                if (!StringUtils.equals(response, "BAD SERVER")) {
+                if (!StringUtils.equals(response, "") && !StringUtils.equals(response, "BAD SERVER")) {
                     if (StringUtils.equals(response.substring(0, 1), SCConstants.RESPONSE_OK)) {
                         if (StringUtils.equals(commandType, "GET") ||
                                 StringUtils.equals(commandType, "QUERY")) {
@@ -271,7 +271,7 @@ public class ClientUtils {
         StringBuilder sb = new StringBuilder();
         try {
             String line = in.readLine();
-            while (!StringUtils.equals(line, "END")) {
+            while (!StringUtils.equals(line, "END") && line != null) {
                 sb.append(line).append("\n");
                 line = in.readLine();
             }
