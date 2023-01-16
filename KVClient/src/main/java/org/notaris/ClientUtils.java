@@ -282,7 +282,7 @@ public class ClientUtils {
         if (sb.isEmpty()) {
             return sb.toString();
         } else {
-            return sb.substring(0, sb.length() - 2);
+            return sb.substring(0, sb.length() - 1);
         }
     }
 
