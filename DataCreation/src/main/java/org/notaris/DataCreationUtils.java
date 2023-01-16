@@ -39,12 +39,12 @@ public class DataCreationUtils {
 
     protected static Object[] getRandomAttribute(Set<String> keyFile, Integer maxStrLength) {
         if (!keyFile.isEmpty()) {
-            int item = RandomUtils.nextInt(1, keyFile.size());
-            int i = 1;
+            // int item = RandomUtils.nextInt(1, keyFile.size());
+            // int i = 1;
 
             for (String keyName : keyFile) {
                 String[] _keyName = keyName.split(" ");
-                if (i == item) {
+                // if (i == item) {
                     if (StringUtils.equals(_keyName[1], "int")) {
                         keyFile.remove(keyName);
                         return new Object[] {_keyName[0], 1, getValue(Type.TYPE_INTEGER, maxStrLength)};
@@ -57,8 +57,8 @@ public class DataCreationUtils {
                         keyFile.remove(keyName);
                         return new Object[] {_keyName[0], 3, getValue(Type.TYPE_STRING, maxStrLength)};
                     }
-                }
-                i++;
+                // }
+                // i++;
             }
         }
 

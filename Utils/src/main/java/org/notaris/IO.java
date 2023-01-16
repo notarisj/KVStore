@@ -47,7 +47,7 @@ public class IO {
      */
     public static boolean writeFile(String path, List<String> writeFile) {
         try {
-            FileWriter writer = new FileWriter(path, true);
+            FileWriter writer = new FileWriter(path, false);
 
             for (String line : writeFile) {
                 writer.write(line);

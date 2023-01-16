@@ -57,7 +57,7 @@ public class DataCreation {
         }
         logger.info("All keys generated successfully!");
         logger.info("Trying to write output file...");
-        String outputPath = System.getProperty("user.home") + "/Desktop/outputFile.txt";
+        String outputPath = System.getProperty("user.home") + "/Desktop/dataToIndex.txt";
         IO.writeFile(outputPath, outputFile);
         logger.info("Output file generated successfully at " + outputPath);
     }
