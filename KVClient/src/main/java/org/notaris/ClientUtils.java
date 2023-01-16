@@ -98,7 +98,6 @@ public class ClientUtils {
 
         switch (commandType) {
             case "PUT" -> {
-
                 Matcher matcher;
                 Pattern pattern;
 
@@ -110,8 +109,6 @@ public class ClientUtils {
                 matcher = pattern.matcher(userCommand);
                 userCommand = matcher.replaceAll(" | ");
 
-                System.out.println(userCommand);
-
                 String keyName = SCUtils.getKeyName(userCommand.substring(4));
                 if (checkIfKeyExists(keyName, servers, replicationFactor)) {
                     return "KEY ALREADY EXISTS. YOU MUSTS DELETE IT FIRST";
@@ -121,7 +118,7 @@ public class ClientUtils {
                 List<ServerStruct> socketsToSend = servers.subList(0, replicationFactor);
                 return executeCommand(socketsToSend, userCommand, replicationFactor);
             }
-            case "GET", "COMPUTE", "QUERY" -> { // Searches only in top level keys
+            case "GET", "COMPUTE", "QUERY" -> {
                 //List<ServerStruct> socketsToSend = servers.subList(0, servers.size() + 1 - replicationFactor);
                 return executeCommand(servers, userCommand, replicationFactor);
             }
