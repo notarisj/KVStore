@@ -9,6 +9,17 @@ $ mvn install
 
 ## Deploy
 
+### Data Creation
+
+To create a random dataset to use in the server run the following commands
+
+```
+$ cd git/KVStore/DataCreation/target
+$ java -cp DataCreation-1.0-SNAPSHOT-jar-with-dependencies.jar org.notaris.DataCreation -n 10000 -m 3 -d 3 -l 4 -k /path/to/keyfile.txt
+```
+
+The file will be automatically created in Desktop.
+
 ### KVServer
 
 To deploy a server run the following commands
