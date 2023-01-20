@@ -55,11 +55,11 @@ public class DataCreation {
             outputFile.add(_key);
             logger.info(_key);
         }
+
         logger.info("All keys generated successfully!");
         logger.info("Trying to write output file...");
         String outputPath = System.getProperty("user.home") + "/Desktop/dataToIndex.txt";
         IO.writeFile(outputPath, outputFile);
         logger.info("Output file generated successfully at " + outputPath);
     }
-
 }
