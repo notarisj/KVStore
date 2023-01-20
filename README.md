@@ -2,6 +2,8 @@
 
 ## Compile
 
+For the develoment I used: openjdk 19.0.1 (2022-10-18)
+
 ```
 $ cd KVStore/
 $ mvn install
@@ -11,7 +13,7 @@ $ mvn install
 
 ### Data Creation
 
-To create a random dataset to use in the server run the following commands
+To create a random dataset to use in the server run the following commands:
 
 ```
 $ cd git/KVStore/DataCreation/target
@@ -22,7 +24,7 @@ The file will be automatically created in Desktop.
 
 ### KVServer
 
-To deploy a server run the following commands
+To deploy a server run the following commands:
 
 ```
 $ cd KVStore/KVServer/target
@@ -33,7 +35,7 @@ You can deploy multiple servers.
 
 ### KVClient
 
-To start a client run the following commands
+To start a client run the following commands:
 
 ```
 $ cd KVStore/KVClient/target

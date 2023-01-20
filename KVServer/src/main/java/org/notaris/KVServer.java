@@ -19,15 +19,15 @@ public class KVServer {
 
     public static void main(String[] args) throws IOException {
 
+        // Default settings
         String ipAddress = "127.0.0.1";
         int port = 10000;
 
         // parse command-line arguments
         for (int i = 0; i < args.length; i++) {
-            if (args[i].equals("-a")) {
-                ipAddress = args[i + 1];
-            } else if (args[i].equals("-p")) {
-                port = Integer.parseInt(args[i + 1]);
+            switch (args[i]) {
+                case "-a" -> ipAddress = args[i + 1];
+                case "-p" -> port = Integer.parseInt(args[i + 1]);
             }
         }
 
